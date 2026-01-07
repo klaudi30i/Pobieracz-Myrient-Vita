@@ -1,35 +1,32 @@
 cmake_minimum_required(VERSION 3.10)
 
-# 1. Sprawdzenie środowiska
-if(NOT DEFINED ENV{VITASDK})
-    message(FATAL_ERROR "Please define VITASDK environment variable")
-endif()
+# 1. Definiujemy projekt
+project(myrient_browser C)
 
-# 2. Ręczne ustawienie kompilatorów (to naprawiło poprzedni błąd)
-set(CMAKE_C_COMPILER "$ENV{VITASDK}/bin/arm-vita-eabi-gcc")
-set(CMAKE_CXX_COMPILER "$ENV{VITASDK}/bin/arm-vita-eabi-g++")
+# 2. Ustawiamy sztywne ścieżki dla kontenera GitHub Actions
+set(VITASDK "/usr/local/vitasdk")
 
-# 3. Ładowanie skryptu Vity
-include("$ENV{VITASDK}/share/vita.cmake" REQUIRED)
+# 3. Wymuszamy kompilator
+set(CMAKE_C_COMPILER "${VITASDK}/bin/arm-vita-eabi-gcc")
+set(CMAKE_CXX_COMPILER "${VITASDK}/bin/arm-vita-eabi-g++")
 
-# 4. NOWOŚĆ: Ręczne dodanie ścieżek do plików .h (Headerów)
-# To naprawia błąd "fatal error: psp2/kernel/process.h: No such file or directory"
-include_directories(
-    "$ENV{VITASDK}/arm-vita-eabi/include"
-    "$ENV{VITASDK}/include"
-    "/usr/local/vitasdk/arm-vita-eabi/include"
-)
+# 4. Ładujemy konfigurację Vity
+include("${VITASDK}/share/vita.cmake" REQUIRED)
 
-# 5. Definicja projektu
-project(myrient_browser C CXX)
+# 5. NAJWAŻNIEJSZE: Ręcznie wbijamy ścieżki do nagłówków w flagi kompilatora
+# To naprawia błąd "No such file or directory" ignorując standardowe mechanizmy CMake
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-q -O3 -I${VITASDK}/arm-vita-eabi/include -I${VITASDK}/include -D__VITA__")
 
-# 6. Flagi
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-q -O3")
-
-# 7. Plik wykonywalny
+# 6. Dodajemy plik wykonywalny
 add_executable(myrient_app main.c)
 
-# 8. Biblioteki
+# 7. Wymuszamy ścieżki do bibliotek
+link_directories(
+    "${VITASDK}/arm-vita-eabi/lib"
+    "${VITASDK}/lib"
+)
+
+# 8. Linkujemy biblioteki
 target_link_libraries(myrient_app
     curl
     ssl
@@ -46,5 +43,5 @@ target_link_libraries(myrient_app
     m
 )
 
-# 9. Budowanie VPK
+# 9. Tworzymy VPK
 vita_create_vpk(myrient_app "MYRIENT00" "Myrient Browser" "eboot.bin" "param.sfo")
