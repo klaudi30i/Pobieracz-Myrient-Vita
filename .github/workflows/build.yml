@@ -1,17 +1,18 @@
 name: Build Vita App
 
-on: [push]
+on: [push, workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     container: vitasdk/vitasdk:latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     
     - name: Compile
       run: |
-        cmake .
+        # To jest kluczowa linia - wskazujemy plik toolchain
+        cmake -DCMAKE_TOOLCHAIN_FILE=$VITASDK/share/vita.toolchain.cmake .
         make
         
     - name: Upload VPK
