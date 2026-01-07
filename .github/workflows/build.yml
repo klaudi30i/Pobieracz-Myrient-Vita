@@ -9,9 +9,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Install dependencies
+      run: |
+        # To jest ten brakujący krok!
+        # Robot pobiera biblioteki i pliki nagłówkowe
+        vdpm install vita2d curlssl libpng zlib jpeg
+        
     - name: Compile
       run: |
-        # To jest kluczowa linia - wskazujemy plik toolchain
+        # Konfiguracja i budowanie
         cmake -DCMAKE_TOOLCHAIN_FILE=$VITASDK/share/vita.toolchain.cmake .
         make
         
