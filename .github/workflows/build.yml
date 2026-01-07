@@ -1,0 +1,21 @@
+name: Build Vita App
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: vitasdk/vitasdk:latest
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Compile
+      run: |
+        cmake .
+        make
+        
+    - name: Upload VPK
+      uses: actions/upload-artifact@v4
+      with:
+        name: MyrientBrowser
+        path: myrient_app.vpk
