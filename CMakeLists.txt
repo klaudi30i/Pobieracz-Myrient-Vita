@@ -4,18 +4,23 @@ if(NOT DEFINED ENV{VITASDK})
     message(FATAL_ERROR "Please define VITASDK environment variable")
 endif()
 
-# Konfiguracja Vity
 include("$ENV{VITASDK}/share/vita.cmake" REQUIRED)
 
 project(myrient_browser C)
 
-# Twoje biblioteki, które zainstalowaliśmy w build.yml
-set(LIBRARIES
+add_executable(myrient_app main.c)
+
+# TWARDA LISTA BIBLIOTEK W IDEALNEJ KOLEJNOŚCI
+# Zmieniłem kolejność: najpierw curl, potem ssl/crypto/zlib
+target_link_libraries(myrient_app
     curl
     ssl
     crypto
     z
     vita2d
+    png
+    jpeg
+    freetype
     SceDisplay_stub
     SceGxm_stub
     SceSysmodule_stub
@@ -26,9 +31,6 @@ set(LIBRARIES
     m
 )
 
-# Tworzenie pliku
-add_executable(myrient_app main.c)
-target_link_libraries(myrient_app ${LIBRARIES})
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-q -O3")
 
-# Pakowanie do VPK
 vita_create_vpk(myrient_app "MYRIENT00" "Myrient Browser" "eboot.bin" "param.sfo")
