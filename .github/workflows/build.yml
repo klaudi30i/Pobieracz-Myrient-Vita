@@ -5,19 +5,25 @@ on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: vitasdk/vitasdk:latest
+    # UŻYWAMY WERSJI MAGONOTE - ONA JEST STABILNA I DZIAŁA
+    container: vitasdk/vitasdk:magonote
     steps:
     - uses: actions/checkout@v4
     
     - name: Install dependencies
       run: |
-        # Pobieramy biblioteki homebrew z repozytorium VitaSDK
-        # Używamy najnowszych nazw pakietów
-        vdpm install vita2d curl zlib libpng libjpeg-turbo
+        # Instalujemy biblioteki ręcznie, jedna po drugiej, żeby nic się nie zepsuło
+        vdpm install vita2d
+        vdpm install curl
+        vdpm install zlib
+        vdpm install libpng
+        vdpm install libjpeg-turbo
+        vdpm install freetype
         
     - name: Compile
       run: |
-        cmake -DCMAKE_TOOLCHAIN_FILE=$VITASDK/share/vita.toolchain.cmake .
+        # Używamy pliku toolchain, który jest wbudowany w ten kontener
+        cmake -DCMAKE_TOOLCHAIN_FILE=/usr/local/vitasdk/share/vita.toolchain.cmake .
         make
         
     - name: Upload VPK
