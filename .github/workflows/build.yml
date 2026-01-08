@@ -11,14 +11,15 @@ jobs:
     
     - name: Install dependencies
       run: |
-        # POPRAWKA: W tym kontenerze nie wpisujemy "install".
-        # Podajemy tylko nazwy paczek po kolei.
+        # Naprawa błędu "Installing install":
+        # Podajemy tylko nazwy paczek, jedna pod drugą.
         vdpm vita2d
         vdpm curl
         vdpm zlib
         vdpm libpng
         vdpm libjpeg-turbo
         vdpm openssl
+        vdpm mbedtls
         
     - name: Compile
       run: |
