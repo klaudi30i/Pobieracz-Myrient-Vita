@@ -1,17 +1,24 @@
 cmake_minimum_required(VERSION 3.10)
 
-if(NOT DEFINED ENV{VITASDK})
-    message(FATAL_ERROR "Please define VITASDK environment variable")
+# Standardowy blok z oficjalnych przykładów VitaSDK
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+  if(DEFINED ENV{VITASDK})
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{VITASDK}/share/vita.toolchain.cmake" CACHE PATH "toolchain file")
+  else()
+    message(FATAL_ERROR "Please define VITASDK to point to your SDK path")
+  endif()
 endif()
 
-include("$ENV{VITASDK}/share/vita.cmake" REQUIRED)
+include("${CMAKE_TOOLCHAIN_FILE}")
 
 project(myrient_browser C)
 
 add_executable(myrient_app main.c)
 
-# TWARDA LISTA BIBLIOTEK W IDEALNEJ KOLEJNOŚCI
-# Zmieniłem kolejność: najpierw curl, potem ssl/crypto/zlib
+# Flagi kompilatora (standardowe dla Vity)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-q -O3")
+
+# Biblioteki w odpowiedniej kolejności (curl wymaga ssl/crypto/z)
 target_link_libraries(myrient_app
     curl
     ssl
@@ -20,7 +27,6 @@ target_link_libraries(myrient_app
     vita2d
     png
     jpeg
-    freetype
     SceDisplay_stub
     SceGxm_stub
     SceSysmodule_stub
@@ -30,7 +36,5 @@ target_link_libraries(myrient_app
     SceCommonDialog_stub
     m
 )
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-q -O3")
 
 vita_create_vpk(myrient_app "MYRIENT00" "Myrient Browser" "eboot.bin" "param.sfo")
