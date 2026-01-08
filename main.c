@@ -15,7 +15,7 @@
 /* Kolory */
 #define COL_BG    RGBA8(30, 30, 35, 255)
 #define COL_TEXT  RGBA8(255, 255, 255, 255)
-#define COL_DIR   RGBA8(255, 220, 0, 255)  // Zółty dla folderów
+#define COL_DIR   RGBA8(255, 220, 0, 255)
 #define COL_SEL   RGBA8(0, 150, 255, 255)
 
 typedef struct {
@@ -33,8 +33,8 @@ char status[256] = "Wczytywanie...";
 int downloading = 0;
 float progress = 0.0f;
 
-// --- Obsługa pamięci dla CURL ---
 struct MemoryStruct { char *memory; size_t size; };
+
 static size_t WriteMem(void *contents, size_t size, size_t nmemb, void *userp) {
     size_t realsize = size * nmemb;
     struct MemoryStruct *mem = (struct MemoryStruct *)userp;
@@ -47,16 +47,14 @@ static size_t WriteMem(void *contents, size_t size, size_t nmemb, void *userp) {
     return realsize;
 }
 
-// --- Parsowanie HTML (wyciąganie linków) ---
 void parse_html(char *html) {
     if (entries) free(entries);
-    entries = malloc(sizeof(Entry) * 2048); // Max 2048 plików na folder
+    entries = malloc(sizeof(Entry) * 2048);
     entryCount = 0;
     selected = 0;
     scroll = 0;
 
     char *cursor = html;
-    // Jeśli nie jesteśmy w katalogu głównym, dodaj opcję "Cofnij"
     if (strcmp(currentUrl, BASE_URL) != 0) {
         strcpy(entries[0].name, "[ .. ] COFNIJ");
         strcpy(entries[0].href, "../");
@@ -76,21 +74,17 @@ void parse_html(char *html) {
         href[len] = '\0';
         cursor = endQuote;
 
-        // Ignoruj sortowanie i parent directory w linkach myrient
         if (href[0] == '?') continue;
         if (strcmp(href, "../") == 0) continue; 
 
-        // Czy to folder? (kończy się na /)
         int is_dir = (href[len-1] == '/');
-        // Czy to zip?
         int is_zip = (strstr(href, ".zip") != NULL);
 
         if (is_dir || is_zip) {
             strncpy(entries[entryCount].href, href, 255);
-            // Dekodowanie %20 na spacje dla ładnej nazwy
             char display_name[128];
-            strncpy(display_name, href, 127); // uproszczenie
-            if(is_dir) display_name[len-1] = '\0'; // usuń slash na końcu
+            strncpy(display_name, href, 127);
+            if(is_dir && len > 0) display_name[len-1] = '\0';
             
             snprintf(entries[entryCount].name, 128, "%s%s", is_dir ? "[DIR] " : "", display_name);
             entries[entryCount].is_folder = is_dir;
@@ -101,7 +95,6 @@ void parse_html(char *html) {
     snprintf(status, 256, "Plikow: %d", entryCount);
 }
 
-// --- Pobieranie listy plików ---
 void fetch_dir() {
     CURL *curl;
     struct MemoryStruct chunk;
@@ -123,10 +116,10 @@ void fetch_dir() {
     }
 }
 
-// --- Pobieranie pliku (Progres) ---
 size_t write_file(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     return fwrite(ptr, size, nmemb, stream);
 }
+
 int progress_cb(void *p, double dlt, double dln, double ult, double uln) {
     if (dlt > 0) progress = (float)(dln / dlt);
     
@@ -143,7 +136,7 @@ void download_file(char *filename, char *full_url) {
     CURL *curl;
     FILE *fp;
     char path[256];
-    snprintf(path, 256, "%s%s", SAVE_DIR, filename); // Uproszczona nazwa
+    snprintf(path, 256, "%s%s", SAVE_DIR, filename);
 
     curl = curl_easy_init();
     if (curl) {
@@ -165,29 +158,24 @@ void download_file(char *filename, char *full_url) {
     }
 }
 
-// --- Zmiana katalogu ---
 void handle_enter() {
+    if (entryCount == 0) return;
     Entry *e = &entries[selected];
     if (e->is_folder) {
-        // Jeśli cofamy
         if (strcmp(e->href, "../") == 0) {
-            // Logika ucinania URL jest trudna w C, tu uproszczamy: wracamy do BASE
-            // W pełnej wersji trzeba szukać ostatniego slasha
             char *last = strrchr(currentUrl, '/');
-            if (last) *last = '\0'; // usuń ostatni slash
+            if (last) *last = '\0';
             last = strrchr(currentUrl, '/');
-            if (last) *(last+1) = '\0'; // zostaw slash
+            if (last) *(last+1) = '\0';
             if (strlen(currentUrl) < strlen(BASE_URL)) strcpy(currentUrl, BASE_URL);
         } else {
-            // Doklej folder do URL
             strcat(currentUrl, e->href);
         }
         fetch_dir();
     } else {
-        // To plik, pobieramy
         char full_url[1024];
         snprintf(full_url, 1024, "%s%s", currentUrl, e->href);
-        download_file(e->href, full_url); // href jako nazwa pliku (zawiera %20, ale zadziała)
+        download_file(e->href, full_url);
         snprintf(status, 256, "Pobrano: %s", e->name);
     }
 }
