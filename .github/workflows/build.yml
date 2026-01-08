@@ -11,13 +11,12 @@ jobs:
     
     - name: Install dependencies
       run: |
-        # To jest ten brakujący krok!
-        # Robot pobiera biblioteki i pliki nagłówkowe
-        vdpm install vita2d curlssl libpng zlib jpeg
+        # Pobieramy biblioteki homebrew z repozytorium VitaSDK
+        # Używamy najnowszych nazw pakietów
+        vdpm install vita2d curl zlib libpng libjpeg-turbo
         
     - name: Compile
       run: |
-        # Konfiguracja i budowanie
         cmake -DCMAKE_TOOLCHAIN_FILE=$VITASDK/share/vita.toolchain.cmake .
         make
         
