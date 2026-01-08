@@ -11,15 +11,18 @@ jobs:
     
     - name: Install dependencies
       run: |
-        # NAPRAWA: W tym obrazie "install" jest dodawane z automatu.
-        # Dlatego podajemy TYLKO nazwy paczek.
-        # Wymieniamy wszystko, co jest potrzebne do Curl i Vita2D.
-        vdpm vita2d curl mbedtls zlib libpng libjpeg-turbo
+        # POPRAWKA: W tym kontenerze nie wpisujemy "install".
+        # Podajemy tylko nazwy paczek po kolei.
+        vdpm vita2d
+        vdpm curl
+        vdpm zlib
+        vdpm libpng
+        vdpm libjpeg-turbo
+        vdpm openssl
         
     - name: Compile
       run: |
-        # Wymuszamy użycie pliku toolchain, żeby CMake wiedział gdzie co jest
-        cmake -DCMAKE_TOOLCHAIN_FILE=$VITASDK/share/vita.toolchain.cmake .
+        cmake .
         make
         
     - name: Upload VPK
